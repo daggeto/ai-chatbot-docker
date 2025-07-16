@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "ai-chatbot-api"
+version = "0.1.0"
+description = "Simple AI chatbot API"
+authors = ["AI Assistant"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.104.1"
+uvicorn = {extras = ["standard"], version = "^0.24.0"}
+pydantic = "^2.5.0"
+python-multipart = "^0.0.6"
+transformers = "^4.36.0"
+torch = "^2.1.0"
+accelerate = "^0.25.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.3"
+black = "^23.11.0"
+isort = "^5.12.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
