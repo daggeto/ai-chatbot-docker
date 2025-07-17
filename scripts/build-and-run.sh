@@ -1,43 +1,46 @@
 #!/bin/bash
 
-
 set -e
 
-echo "🚀 Building AI Chatbot Docker image..."
+echo "🚀 Building AI Chatbot Docker image with multi-architecture support..."
 
-docker build -t ai-chatbot-api:latest ./backend
+if ! docker buildx ls | grep -q "multiarch"; then
+  echo "Creating multi-architecture builder..."
+  docker buildx create --name multiarch --use --bootstrap
+fi
 
-echo "✅ Docker image built successfully!"
+docker buildx build \
+  --platform linux/amd64 \
+  -t ai-chatbot-api:latest \
+  --load \
+  ./backend
 
-echo "🔄 Stopping any existing containers..."
-docker stop ai-chatbot-container 2>/dev/null || true
-docker rm ai-chatbot-container 2>/dev/null || true
+echo "✅ Multi-architecture Docker image built successfully!"
 
-echo "🚀 Starting AI Chatbot container..."
+echo "🏃 Running AI Chatbot container..."
+
+docker stop ai-chatbot-api 2>/dev/null || true
+docker rm ai-chatbot-api 2>/dev/null || true
+
+mkdir -p ./backend/models
+
 docker run -d \
-  --name ai-chatbot-container \
+  --name ai-chatbot-api \
   -p 8000:8000 \
-  --restart unless-stopped \
+  -v "$(pwd)/backend/models:/models" \
+  -v "$(pwd)/backend/docs:/app/docs" \
+  -e MODEL_PATH=/models/mistral-7b-instruct-v0.1.Q4_K_M.gguf \
+  -e DOCS_PATH=/app/docs \
+  -e CHROMA_PERSIST_DIR=/app/chroma_db \
+  --rm \
   ai-chatbot-api:latest
 
-echo "⏳ Waiting for container to start..."
-sleep 5
+echo "✅ Container is running!"
+echo "📡 API available at: http://localhost:8000"
+echo "📋 API docs at: http://localhost:8000/docs"
+echo "🧪 Run './scripts/test-api.sh' to test the API"
+echo "🐳 Use 'docker-compose up' for full stack with frontend"
 
-echo "🔍 Checking container status..."
-if docker ps | grep -q ai-chatbot-container; then
-    echo "✅ Container is running successfully!"
-    echo ""
-    echo "📡 API is available at: http://localhost:8000"
-    echo "🏥 Health check: http://localhost:8000/health"
-    echo ""
-    echo "📝 Test the API with:"
-    echo "curl -X POST http://localhost:8000/chat \\"
-    echo "  -H \"Content-Type: application/json\" \\"
-    echo "  -d '{\"message\": \"Hello, how are you?\"}'"
-    echo ""
-    echo "📊 View logs with: docker logs ai-chatbot-container"
-    echo "🛑 Stop with: docker stop ai-chatbot-container"
-else
-    echo "❌ Container failed to start. Check logs with: docker logs ai-chatbot-container"
-    exit 1
-fi
+echo ""
+echo "📝 Note: If no model file is found, the API will use fallback responses."
+echo "   Download a model to ./backend/models/ for full LLM functionality."
