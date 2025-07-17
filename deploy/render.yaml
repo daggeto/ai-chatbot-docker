@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: ai-chatbot-api
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    envVars:
+      - key: MODEL_PATH
+        value: /models/mistral-7b-instruct-v0.1.Q4_K_M.gguf
+      - key: DOCS_PATH
+        value: /app/docs
+      - key: CHROMA_PERSIST_DIR
+        value: /app/chroma_db
+      - key: MAX_TOKENS
+        value: 512
+      - key: TEMPERATURE
+        value: 0.7
+    disk:
+      name: ai-chatbot-storage
+      mountPath: /app/chroma_db
+      sizeGB: 10
+    plan: standard
+    healthCheckPath: /health
+    autoDeploy: false

@@ -1,0 +1,38 @@
+app = "ai-chatbot-api"
+primary_region = "ord"
+
+[build]
+  dockerfile = "./backend/Dockerfile"
+
+[env]
+  MODEL_PATH = "/models/mistral-7b-instruct-v0.1.Q4_K_M.gguf"
+  DOCS_PATH = "/app/docs"
+  CHROMA_PERSIST_DIR = "/app/chroma_db"
+  MAX_TOKENS = "512"
+  TEMPERATURE = "0.7"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[http_service.checks]]
+  interval = "10s"
+  grace_period = "5s"
+  method = "get"
+  path = "/health"
+  protocol = "http"
+  timeout = "2s"
+  tls_skip_verify = false
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 2
+  memory_mb = 4096
+
+[mounts]
+  source = "ai_chatbot_data"
+  destination = "/app/chroma_db"
